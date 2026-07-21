@@ -20,8 +20,13 @@
     border: 2px solid #0f3460;
   }
   #score {
-    margin-bottom: 10px;
+    margin-bottom: 4px;
     font-size: 20px;
+  }
+  #highscore {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #0fbcf9;
   }
   #msg {
     margin-top: 10px;
@@ -32,6 +37,7 @@
 </head>
 <body>
   <div id="score">Punkte: 0</div>
+  <div id="highscore">Highscore: 0</div>
   <canvas id="game" width="400" height="400"></canvas>
   <div id="msg">Steuerung: Pfeiltasten &nbsp;|&nbsp; Leertaste = Neustart</div>
 
@@ -40,6 +46,10 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const box = 20;
 let snake, direction, food, score, gameOver, loopId;
+
+// Highscore aus dem Browser-Speicher laden (falls vorhanden)
+let highscore = Number(localStorage.getItem('snakeHighscore')) || 0;
+document.getElementById('highscore').textContent = 'Highscore: ' + highscore;
 
 function init() {
   snake = [{x: 9 * box, y: 9 * box}];
@@ -113,6 +123,14 @@ function draw() {
 function endGame() {
   gameOver = true;
   clearInterval(loopId);
+
+  // Neuer Highscore? Dann im Browser-Speicher ablegen
+  if (score > highscore) {
+    highscore = score;
+    localStorage.setItem('snakeHighscore', highscore);
+    document.getElementById('highscore').textContent = 'Highscore: ' + highscore;
+  }
+
   ctx.fillStyle = 'rgba(0,0,0,0.7)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#eee';
