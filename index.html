@@ -47,7 +47,7 @@
 // Ersetze die zwei folgenden Werte mit deinen eigenen aus dem Supabase-Dashboard
 const SUPABASE_URL = 'https://afpbmxvoggfveipeypnk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmcGJteHZvZ2dmdmVpcGV5cG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTU3MTQsImV4cCI6MjEwMDIzMTcxNH0.mowaKSKHV6y4a81jOe7PwVq04NMrNd-stLvNoJr4ln0';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -59,7 +59,7 @@ let highscore = Number(localStorage.getItem('snakeHighscore')) || 0;
 document.getElementById('highscore').textContent = 'Highscore: ' + highscore;
 
 async function loadGlobalHighscore() {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseClient
     .from('highscores')
     .select('score')
     .order('score', { ascending: false })
@@ -170,7 +170,7 @@ function endGame() {
 }
 
 async function saveScoreToDatabase(finalScore) {
-  const { error } = await supabase
+  const { error } = await supabaseClient
     .from('highscores')
     .insert([{ name: 'Spieler', score: finalScore }]);
 
