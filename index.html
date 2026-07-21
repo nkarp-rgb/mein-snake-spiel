@@ -41,15 +41,40 @@
   <canvas id="game" width="400" height="400"></canvas>
   <div id="msg">Steuerung: Pfeiltasten &nbsp;|&nbsp; Leertaste = Neustart</div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ── Supabase-Verbindung ──
+// Ersetze die zwei folgenden Werte mit deinen eigenen aus dem Supabase-Dashboard
+const SUPABASE_URL = 'https://afpbmxvoggfveipeypnk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmcGJteHZvZ2dmdmVpcGV5cG5rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ2NTU3MTQsImV4cCI6MjEwMDIzMTcxNH0.mowaKSKHV6y4a81jOe7PwVq04NMrNd-stLvNoJr4ln0';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const box = 20;
 let snake, direction, food, score, gameOver, loopId;
 
-// Highscore aus dem Browser-Speicher laden (falls vorhanden)
+// Highscore: lokal als schneller Startwert, danach mit dem globalen Wert aus der Datenbank überschreiben
 let highscore = Number(localStorage.getItem('snakeHighscore')) || 0;
 document.getElementById('highscore').textContent = 'Highscore: ' + highscore;
+
+async function loadGlobalHighscore() {
+  const { data, error } = await supabase
+    .from('highscores')
+    .select('score')
+    .order('score', { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error('Fehler beim Laden des Highscores:', error);
+    return;
+  }
+  if (data && data.length > 0 && data[0].score > highscore) {
+    highscore = data[0].score;
+    document.getElementById('highscore').textContent = 'Highscore: ' + highscore;
+  }
+}
+loadGlobalHighscore();
 
 function init() {
   snake = [{x: 9 * box, y: 9 * box}];
@@ -124,7 +149,10 @@ function endGame() {
   gameOver = true;
   clearInterval(loopId);
 
-  // Neuer Highscore? Dann im Browser-Speicher ablegen
+  // Jeden gespielten Score in die Datenbank schreiben (für die globale Bestenliste)
+  saveScoreToDatabase(score);
+
+  // Neuer Highscore? Dann lokal und in der Anzeige aktualisieren
   if (score > highscore) {
     highscore = score;
     localStorage.setItem('snakeHighscore', highscore);
@@ -139,6 +167,16 @@ function endGame() {
   ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 10);
   ctx.font = '14px sans-serif';
   ctx.fillText('Leertaste für Neustart', canvas.width / 2, canvas.height / 2 + 20);
+}
+
+async function saveScoreToDatabase(finalScore) {
+  const { error } = await supabase
+    .from('highscores')
+    .insert([{ name: 'Spieler', score: finalScore }]);
+
+  if (error) {
+    console.error('Fehler beim Speichern des Scores:', error);
+  }
 }
 
 init();
